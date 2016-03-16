@@ -19,11 +19,12 @@
 
 
 import logging
+import collections
 logger = logging.getLogger(__name__)
 
 from multiprocessing import  Process, Value, Condition, reduction
 
-from TServer import TServer
+from .TServer import TServer
 from thrift.transport.TTransport import TTransportException
 
 
@@ -42,7 +43,7 @@ class TProcessPoolServer(TServer):
         self.postForkCallback = None
 
     def setPostForkCallback(self, callback):
-        if not callable(callback):
+        if not isinstance(callback, collections.Callable):
             raise TypeError("This is not a callback!")
         self.postForkCallback = callback
 
