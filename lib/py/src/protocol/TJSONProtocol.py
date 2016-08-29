@@ -30,17 +30,17 @@ __all__ = ['TJSONProtocol',
 
 VERSION = 1
 
-COMMA = ','
-COLON = ':'
-LBRACE = '{'
-RBRACE = '}'
-LBRACKET = '['
-RBRACKET = ']'
-QUOTE = '"'
-BACKSLASH = '\\'
-ZERO = '0'
+COMMA = b','
+COLON = b':'
+LBRACE = b'{'
+RBRACE = b'}'
+LBRACKET = b'['
+RBRACKET = b']'
+QUOTE = b'"'
+BACKSLASH = b'\\'
+ZERO = b'0'
 
-ESCSEQ = '\\u00'
+ESCSEQ = b'\\u00'
 ESCAPE_CHAR = '"\\bfnrt'
 ESCAPE_CHAR_VALS = ['"', '\\', '\b', '\f', '\n', '\r', '\t']
 NUMERIC_CHAR = '+-.0123456789Ee'
@@ -174,14 +174,14 @@ class TJSONProtocolBase(TProtocolBase):
 
   def writeJSONString(self, string):
     self.context.write()
-    self.trans.write(json.dumps(string))
+    self.trans.write(json.dumps(string).encode('utf-8'))
 
   def writeJSONNumber(self, number):
     self.context.write()
     jsNumber = str(number)
     if self.context.escapeNum():
-      jsNumber = "%s%s%s" % (QUOTE, jsNumber,  QUOTE)
-    self.trans.write(jsNumber)
+      jsNumber = "%s%s%s" % (QUOTE.decode('utf-8'), jsNumber,  QUOTE.decode('utf-8'))
+    self.trans.write(jsNumber.encode('utf-8'))
 
   def writeJSONBase64(self, binary):
     self.context.write()
@@ -211,7 +211,7 @@ class TJSONProtocolBase(TProtocolBase):
     current = self.reader.read()
     if character != current:
       raise TProtocolException(TProtocolException.INVALID_DATA,
-                               "Unexpected character: %s" % current)
+                               "Unexpected character: {}, expected {}".format(current, character))
 
   def readJSONString(self, skipContext):
     string = []
@@ -227,7 +227,7 @@ class TJSONProtocolBase(TProtocolBase):
         if character == ESCSEQ[1]:
           self.readJSONSyntaxChar(ZERO)
           self.readJSONSyntaxChar(ZERO)
-          character = json.JSONDecoder().decode('"\\u00%s"' % self.trans.read(2))
+          character = json.JSONDecoder().decode('"\\u00%s"' % self.trans.read(2).decode('utf-8'))
         else:
           off = ESCAPE_CHAR.find(character)
           if off == -1:
@@ -235,7 +235,7 @@ class TJSONProtocolBase(TProtocolBase):
                                      "Expected control char")
           character = ESCAPE_CHAR_VALS[off]
       string.append(character)
-    return ''.join(string)
+    return b''.join(string).decode('utf-8')
 
   def isJSONNumeric(self, character):
     return (True if NUMERIC_CHAR.find(character) != - 1 else False)
@@ -247,10 +247,10 @@ class TJSONProtocolBase(TProtocolBase):
   def readJSONNumericChars(self):
     numeric = []
     while True:
-      character = self.reader.peek()
+      character = self.reader.peek().decode('utf-8')
       if self.isJSONNumeric(character) is False:
         break
-      numeric.append(self.reader.read())
+      numeric.append(self.reader.read().decode('utf-8'))
     return ''.join(numeric)
 
   def readJSONInteger(self):

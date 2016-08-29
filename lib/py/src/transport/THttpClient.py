@@ -25,7 +25,7 @@ import urllib.request, urllib.parse, urllib.error
 import urllib.parse
 import warnings
 
-from io import StringIO
+from io import BytesIO
 
 from .TTransport import *
 
@@ -63,7 +63,7 @@ class THttpClient(TTransportBase):
       self.path = parsed.path
       if parsed.query:
         self.path += '?%s' % parsed.query
-    self.__wbuf = StringIO()
+    self.__wbuf = BytesIO()
     self.__http = None
     self.__timeout = None
     self.__custom_headers = None
@@ -94,7 +94,7 @@ class THttpClient(TTransportBase):
     self.__custom_headers = headers
 
   def read(self, sz):
-    return self.response.read(sz).decode('utf-8')
+    return self.response.read(sz)
 
   def write(self, buf):
     self.__wbuf.write(buf)
@@ -117,7 +117,7 @@ class THttpClient(TTransportBase):
 
     # Pull data out of buffer
     data = self.__wbuf.getvalue()
-    self.__wbuf = StringIO()
+    self.__wbuf = BytesIO()
 
     # HTTP request
     self.__http.putrequest('POST', self.path)
@@ -144,10 +144,12 @@ class THttpClient(TTransportBase):
     if type(data) == str:
       data = data.encode('utf-8')
     self.__http.send(data)
+    #print(data)
 
     # Get reply to flush the request
     self.response = self.__http.getresponse()
 
+    #print(self.response.read().decode('utf-8'))
   # Decorate if we know how to timeout
   if hasattr(socket, 'getdefaulttimeout'):
     flush = __withTimeout(flush)
